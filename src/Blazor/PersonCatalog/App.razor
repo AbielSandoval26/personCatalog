@@ -1,0 +1,22 @@
+﻿<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <PageTitle>Not found</PageTitle>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <p role="alert">Lo sentimos, no se encontró la página.</p>
+        </LayoutView>
+    </NotFound>
+</Router>
+
+@code {
+    [Inject] NavigationManager NavigationManager { get; set; }
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.NavigateTo("/persons");
+    }
+}
+

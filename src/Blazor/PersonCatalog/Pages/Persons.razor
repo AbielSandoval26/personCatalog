@@ -1,0 +1,165 @@
+﻿@page "/persons"
+@using PersonCatalog.Models
+@using PersonCatalog.Services
+@using System.Reflection
+@inject PersonService PersonService
+
+<h3>Lista de Personas</h3>
+
+@if (persons == null)
+{
+    <p><em>Cargando...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                @foreach (var property in PropertyPerson)
+                {
+                    <th>@property</th>
+                }
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var persona in persons)
+            {
+                <tr>
+                    <td>@persona.Nombre</td>
+                    <td>@persona.Apellido</td>
+                    <td>@persona.Email</td>
+                    <td>@persona.Direccion</td>
+                    <td>@persona.Telefono</td>
+                    <button class="btn btn-warning" style="background-color:yellow; margin-right:03px;" @onclick="() => EditPerson(persona)">Editar</button>
+                    <button class="btn btn-danger" style="background-color:red" @onclick="() => DeletePerson(persona.Id)">Eliminar</button>
+                </tr>
+            }
+        </tbody>
+    </table>
+    
+}
+
+<h3>@(isEditing ? "Editar Persona" : "Agregar Persona")</h3>
+
+<EditForm Model="currentPerson" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    @* <div>
+        <label style="text-align:end;" for="nombre">Nombre:</label>
+        <InputText style="margin-left: 10px;" id="nombre" @bind-Value="currentPerson.Nombre" />
+    </div>
+    <div>
+        <label style="text-align:end;" for="apellido">Apellido:</label>
+        <InputText id="apellido" @bind-Value="currentPerson.Apellido" />
+    </div>
+    <div>
+        <label for="email">Email:</label>
+        <InputText id="email" @bind-Value="currentPerson.Email" />
+    </div>
+    <div>
+        <label style="text-align:end;" for="direccion">Direccion:</label>
+        <InputText id="direccion" @bind-Value="currentPerson.Direccion" />
+    </div>
+    <div>
+        <label style="text-align:end;" for="telefono">Telefono:</label>
+        <InputText id="telefono" @bind-Value="currentPerson.Telefono" />
+    </div> *@
+
+    <div class="form-group row">
+        <label class="col-sm-2 col-form-label text-end mb-2" for="nombre">Nombre:</label>
+        <div class="col-sm-6">
+            <InputText class="form-control" id="nombre" @bind-Value="currentPerson.Nombre" />
+            <ValidationMessage For="@(() => currentPerson.Nombre)" />
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-sm-2 col-form-label text-end mb-2" for="apellido">Apellido:</label>
+        <div class="col-sm-6">
+            <InputText class="form-control" id="apellido" @bind-Value="currentPerson.Apellido" />
+            <ValidationMessage For="@(() => currentPerson.Apellido)" />
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-sm-2 col-form-label text-end mb-2" for="email">Email:</label>
+        <div class="col-sm-6">
+            <InputText class="form-control" id="email" @bind-Value="currentPerson.Email" />
+            <ValidationMessage For="@(() => currentPerson.Email)" />
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-sm-2 col-form-label text-end mb-2" for="direccion">Direccion:</label>
+        <div class="col-sm-6">
+            <InputText class="form-control" id="direccion" @bind-Value="currentPerson.Direccion" />
+            <ValidationMessage For="@(() => currentPerson.Direccion)" />
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-sm-2 col-form-label text-end" for="telefono">Telefono:</label>
+        <div class="col-sm-6">
+            <InputText class="form-control" id="telefono" @bind-Value="currentPerson.Telefono" />
+            <ValidationMessage For="@(() => currentPerson.Telefono)" />
+        </div>
+    </div>
+    <button class="btn btn-success mt-4 mb-4" type="submit">@((isEditing ? "Actualizar" : "Agregar"))</button>
+    <button class="btn btn-primary mt-4 mb-4" type="button" @onclick="CancelEdit">Cancelar</button>
+</EditForm>
+
+@code {
+    private List<Person> persons;
+    private Person currentPerson = new Person();
+    private bool isEditing = false;
+    private List<string> PropertyPerson;
+
+    protected override async Task OnInitializedAsync()
+    {
+        PropertyPerson = new List<string>();
+        PropertyInfo[] properties = typeof(Person).GetProperties();
+        for (int i = 1; i < properties.Length; i++)
+            PropertyPerson.Add(properties[i].Name);
+        
+        await LoadPersons();
+    }
+
+    private async Task LoadPersons()
+    {
+        persons = await PersonService.GetPersonsAsync();
+    }
+
+    private void EditPerson(Person person)
+    {
+        currentPerson = person;
+        isEditing = true;
+    }
+
+    private async Task DeletePerson(int id)
+    {
+        if (await PersonService.DeletePersonAsync(id))
+        {
+            await LoadPersons(); 
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+
+        if (isEditing)
+        {
+            await PersonService.UpdatePersonAsync(currentPerson);
+        }
+        else
+        {
+            await PersonService.AddPersonAsync(currentPerson);
+        }
+
+        await LoadPersons(); 
+        CancelEdit();
+    }
+
+    private void CancelEdit()
+    {
+        currentPerson = new Person();
+        isEditing = false;
+    }
+}
